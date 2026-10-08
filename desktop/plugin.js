@@ -17,16 +17,33 @@ function useOverview() {
 }
 
 function PaperclipPage() {
-  const { loading, error } = useOverview()
-  const iframeSrc = '/api/plugins/euphoria-paperclip/app'
+  const { loading, data, error } = useOverview()
   return jsxs('div', { className: 'flex h-full flex-col overflow-hidden', children: [
     jsx('div', { className: 'flex items-center justify-between border-b border-(--ui-border) px-4 py-2', children: [
-      jsxs('div', { children: [jsx('h1', { className: 'text-lg font-semibold', children: 'Paperclip' }), jsx('p', { className: 'text-xs text-(--ui-text-tertiary)', children: 'Full governance UI — proxied from Paperclip server' })] }),
-      jsx('a', { href: iframeSrc, target: '_blank', rel: 'noopener noreferrer', className: 'text-xs text-(--ui-accent) underline', children: 'Open in new tab' })
+      jsxs('div', { children: [jsx('h1', { className: 'text-lg font-semibold', children: 'Paperclip' }), jsx('p', { className: 'text-xs text-(--ui-text-tertiary)', children: 'Governance overview — dashboard-native' })] }),
+      jsx('a', { href: 'https://euphoria-vision.com/paperclip', target: '_blank', rel: 'noopener noreferrer', className: 'text-xs text-(--ui-accent) underline', children: 'Open in new tab' })
     ] }),
     loading && !error ? jsx('div', { className: 'p-4 text-sm text-(--ui-text-tertiary)', children: 'Loading Paperclip…' }) : null,
     error ? jsx('div', { className: 'p-4 text-sm text-red-400', children: error }) : null,
-    jsx('div', { className: 'flex-1 min-h-0', children: jsx('iframe', { src: iframeSrc, className: 'w-full h-full border-0', title: 'Paperclip UI', sandbox: 'allow-scripts allow-same-origin allow-forms', style: { border: 'none', width: '100%', height: '100%' } }) })
+    !loading && !error && data ? jsxs('div', { className: 'flex-1 min-h-0 overflow-auto p-4', children: [
+      jsxs('div', { className: 'grid grid-cols-4 gap-3 mb-4', children: [
+        jsx('div', { className: 'rounded border border-(--ui-border) p-3', children: [jsx('div', { className: 'text-[10px] uppercase tracking-wide text-(--ui-text-tertiary)', children: 'Health' }), jsx('div', { className: 'mt-1 text-xl font-semibold text-(--ui-accent)', children: data.health?.status ?? '—' })] }),
+        jsx('div', { className: 'rounded border border-(--ui-border) p-3', children: [jsx('div', { className: 'text-[10px] uppercase tracking-wide text-(--ui-text-tertiary)', children: 'Issues' }), jsx('div', { className: 'mt-1 text-xl font-semibold', children: String(data.issue_total ?? 0) })] }),
+        jsx('div', { className: 'rounded border border-(--ui-border) p-3', children: [jsx('div', { className: 'text-[10px] uppercase tracking-wide text-(--ui-text-tertiary)', children: 'Agents' }), jsx('div', { className: 'mt-1 text-xl font-semibold', children: String(data.agent_count ?? 0) })] }),
+        jsx('div', { className: 'rounded border border-(--ui-border) p-3', children: [jsx('div', { className: 'text-[10px] uppercase tracking-wide text-(--ui-text-tertiary)', children: 'Live runs' }), jsx('div', { className: 'mt-1 text-xl font-semibold', children: String(data.live_run_count ?? 0) })] }),
+      ] }),
+      jsxs('div', { className: 'grid grid-cols-2 gap-3', children: [
+        section('Issue counts', Object.entries(data.issue_counts ?? {}).map(([k, v]) =>
+          jsx('div', { className: 'flex justify-between text-sm', children: [jsx('span', { className: 'text-(--ui-text-tertiary)', children: k }), jsx('span', { children: String(v) })] }))),
+        section('Recent issues', (data.recent_issues ?? []).slice(0, 10).map(i =>
+          jsx('div', { className: 'flex justify-between text-sm', children: [jsx('span', { children: i.identifier || i.id?.slice(0, 8) ?? '—' }), jsx('span', { className: 'text-(--ui-text-tertiary)', children: i.status ?? '—' })] }))),
+        section('Agents', (data.agents ?? []).map(a =>
+          jsx('div', { className: 'flex justify-between text-sm', children: [jsx('span', { children: a.name || '—' }), jsx('span', { className: 'text-(--ui-text-tertiary)', children: a.role ?? '' })] }))),
+        section('Bridge activity', (data.bridge_activity ?? []).slice(0, 10).map(b =>
+          jsx('div', { className: 'flex justify-between text-sm', children: [jsx('span', { className: 'text-(--ui-text-tertiary)', children: b.tool || '' }), jsx('span', { children: b.ok ? '✓' : '✗' })] }))),
+      ] }),
+      jsx('div', { className: 'mt-4 text-[10px] text-(--ui-text-tertiary)', children: `Company: ${data.company_id || '—'} · Paperclip ${data.health?.version || '—'} · deployment ${data.health?.deploymentMode || '—'}` })
+    ] }) : null
   ] })
 }
 

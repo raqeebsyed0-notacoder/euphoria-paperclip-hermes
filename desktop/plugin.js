@@ -17,22 +17,16 @@ function useOverview() {
 }
 
 function PaperclipPage() {
-  const { loading, data, error, load } = useOverview()
-  if (loading && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-text-tertiary)', children: 'Loading Paperclip…' })
-  if (error && !data) return jsx('div', { className: 'p-4 text-sm text-red-400', children: error })
-  const issues = data?.recent_issues || []
-  const activity = data?.bridge_activity || []
-  return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
-    jsxs('div', { className: 'flex items-center justify-between', children: [
-      jsxs('div', { children: [jsx('h1', { className: 'text-lg font-semibold', children: 'Paperclip' }), jsx('p', { className: 'text-xs text-(--ui-text-tertiary)', children: 'Governance and actual Hermes use' })] }),
-      jsx('button', { type: 'button', className: 'rounded border border-(--ui-border) px-3 py-1.5 text-xs', onClick: load, children: loading ? 'Refreshing…' : 'Refresh' })
+  const { loading, error } = useOverview()
+  const iframeSrc = '/api/plugins/euphoria-paperclip/app'
+  return jsxs('div', { className: 'flex h-full flex-col overflow-hidden', children: [
+    jsx('div', { className: 'flex items-center justify-between border-b border-(--ui-border) px-4 py-2', children: [
+      jsxs('div', { children: [jsx('h1', { className: 'text-lg font-semibold', children: 'Paperclip' }), jsx('p', { className: 'text-xs text-(--ui-text-tertiary)', children: 'Full governance UI — proxied from Paperclip server' })] }),
+      jsx('a', { href: iframeSrc, target: '_blank', rel: 'noopener noreferrer', className: 'text-xs text-(--ui-accent) underline', children: 'Open in new tab' })
     ] }),
-    error ? jsx('div', { className: 'text-xs text-red-400', children: error }) : null,
-    jsxs('div', { className: 'grid grid-cols-2 gap-2 md:grid-cols-5', children: [
-      metric('Connection', data?.connected ? 'Live' : 'Down'), metric('Issues', data?.issue_total || 0), metric('Assigned', data?.assigned_issue_count || 0), metric('Live runs', data?.live_run_count || 0), metric('Hermes calls', activity.length)
-    ] }),
-    section('Recent issues', issues.length ? issues.map(i => jsxs('div', { className: 'grid grid-cols-[80px_1fr_auto] gap-2 border-b border-(--ui-border) py-2 text-xs', children: [jsx('span', { className: 'font-mono text-(--ui-text-tertiary)', children: i.identifier || String(i.id || '').slice(0, 8) }), jsx('span', { children: i.title || 'Untitled' }), jsx('span', { className: 'text-(--ui-text-tertiary)', children: i.status || 'unknown' })] }, i.id)) : [jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No issues found' })]),
-    section('Hermes bridge activity', activity.length ? activity.slice().reverse().map((a, n) => jsxs('div', { className: 'grid grid-cols-[50px_1fr_auto] gap-2 border-b border-(--ui-border) py-2 text-xs', children: [jsx('span', { children: a.ok ? 'OK' : 'FAIL' }), jsx('span', { children: `${a.tool} · ${a.action}` }), jsx('span', { className: 'text-(--ui-text-tertiary)', children: new Date(a.at).toLocaleString() })] }, a.at + n)) : [jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No plugin activity recorded yet' })])
+    loading && !error ? jsx('div', { className: 'p-4 text-sm text-(--ui-text-tertiary)', children: 'Loading Paperclip…' }) : null,
+    error ? jsx('div', { className: 'p-4 text-sm text-red-400', children: error }) : null,
+    jsx('div', { className: 'flex-1 min-h-0', children: jsx('iframe', { src: iframeSrc, className: 'w-full h-full border-0', title: 'Paperclip UI', sandbox: 'allow-scripts allow-same-origin allow-forms', style: { border: 'none', width: '100%', height: '100%' } }) })
   ] })
 }
 

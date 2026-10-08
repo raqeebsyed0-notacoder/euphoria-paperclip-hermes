@@ -1,18 +1,18 @@
 import { host, ROUTES_AREA, SIDEBAR_NAV_AREA, STATUSBAR_AREAS } from '@hermes/plugin-sdk'
 import { jsx, jsxs } from 'react/jsx-runtime'
-import React from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 let pluginContext = null
 
 function useOverview() {
-  const [state, setState] = React.useState({ loading: true, data: null, error: '' })
-  const load = React.useCallback(() => {
+  const [state, setState] = useState({ loading: true, data: null, error: '' })
+  const load = useCallback(() => {
     setState(s => ({ ...s, loading: true, error: '' }))
     pluginContext.rest('/overview')
       .then(data => setState({ loading: false, data, error: '' }))
       .catch(error => setState(s => ({ ...s, loading: false, error: String(error?.message || error) })))
   }, [])
-  React.useEffect(() => { load(); const id = setInterval(load, 30000); return () => clearInterval(id) }, [load])
+  useEffect(() => { load(); const id = setInterval(load, 30000); return () => clearInterval(id) }, [load])
   return { ...state, load }
 }
 
@@ -51,8 +51,8 @@ function metric(label, value) { return jsxs('div', { className: 'rounded border 
 function section(title, children) { return jsxs('section', { className: 'rounded border border-(--ui-border) p-3', children: [jsx('h2', { className: 'mb-2 text-sm font-medium', children: title }), ...children] }) }
 
 function PaperclipStatus() {
-  const [live, setLive] = React.useState(null)
-  React.useEffect(() => { let active = true; const tick = () => pluginContext.rest('/health').then(() => active && setLive(true)).catch(() => active && setLive(false)); tick(); const id = setInterval(tick, 30000); return () => { active = false; clearInterval(id) } }, [])
+  const [live, setLive] = useState(null)
+  useEffect(() => { let active = true; const tick = () => pluginContext.rest('/health').then(() => active && setLive(true)).catch(() => active && setLive(false)); tick(); const id = setInterval(tick, 30000); return () => { active = false; clearInterval(id) } }, [])
   return jsx('button', { type: 'button', className: 'px-1.5 text-[0.6875rem] text-(--ui-text-tertiary)', onClick: () => host.navigate('/paperclip'), children: `Paperclip ${live === null ? '…' : live ? '●' : '○'}` })
 }
 

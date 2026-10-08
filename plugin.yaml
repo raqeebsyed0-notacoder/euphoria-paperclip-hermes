@@ -1,0 +1,33 @@
+name: euphoria-paperclip
+version: 0.1.0
+manifest_version: 2
+api_version: 1
+description: Official-style Hermes bridge for Paperclip governance, visibility, issues, agents, and live runs
+author: Euphoria
+license: MIT
+tags: [paperclip, governance, operations, dashboard]
+provides_tools:
+  - paperclip_overview
+  - paperclip_issues
+  - paperclip_agents
+config_schema:
+  base_url:
+    type: str
+    default: "http://127.0.0.1:3102"
+    description: "Paperclip API base URL. Loopback only unless allow_remote is explicitly enabled."
+  company_id:
+    type: str
+    default: ""
+    description: "Paperclip company UUID. Empty auto-selects the only company."
+  timeout_seconds:
+    type: int
+    default: 10
+    description: "Bounded HTTP timeout."
+  allow_remote:
+    type: bool
+    default: false
+    description: "Permit a non-loopback Paperclip API endpoint."
+  allow_writes:
+    type: bool
+    default: false
+    description: "Enable create, update, and comment tool actions. Every write still requires confirm=true."

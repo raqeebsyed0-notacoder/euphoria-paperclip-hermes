@@ -36,7 +36,7 @@ function PaperclipPage() {
         section('Issue counts', Object.entries(data.issue_counts ?? {}).map(([k, v]) =>
           jsx('div', { className: 'flex justify-between text-sm', children: [jsx('span', { className: 'text-(--ui-text-tertiary)', children: k }), jsx('span', { children: String(v) })] }))),
         section('Recent issues', (data.recent_issues ?? []).slice(0, 10).map(i =>
-          jsx('div', { className: 'flex justify-between text-sm', children: [jsx('span', { children: i.identifier || i.id?.slice(0, 8) ?? '—' }), jsx('span', { className: 'text-(--ui-text-tertiary)', children: i.status ?? '—' })] }))),
+          jsx('div', { className: 'flex justify-between text-sm', children: [jsx('span', { children: (i.identifier || i.id?.slice(0, 8)) ?? '—' }), jsx('span', { className: 'text-(--ui-text-tertiary)', children: i.status ?? '—' })] }))),
         section('Agents', (data.agents ?? []).map(a =>
           jsx('div', { className: 'flex justify-between text-sm', children: [jsx('span', { children: a.name || '—' }), jsx('span', { className: 'text-(--ui-text-tertiary)', children: a.role ?? '' })] }))),
         section('Bridge activity', (data.bridge_activity ?? []).slice(0, 10).map(b =>

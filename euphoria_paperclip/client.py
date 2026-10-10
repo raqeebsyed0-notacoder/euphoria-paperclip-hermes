@@ -160,6 +160,48 @@ class PaperclipClient:
         cid = quote(self.company_id())
         return _items(self.request("GET", f"/api/companies/{cid}/live-runs"), "runs", "items", "data")
 
+    def projects(self) -> list[dict[str, Any]]:
+        cid = quote(self.company_id())
+        return _items(self.request("GET", f"/api/companies/{cid}/projects"), "projects", "items", "data")
+
+    def goals(self) -> list[dict[str, Any]]:
+        cid = quote(self.company_id())
+        return _items(self.request("GET", f"/api/companies/{cid}/goals"), "goals", "items", "data")
+
+    def activity(self) -> list[dict[str, Any]]:
+        cid = quote(self.company_id())
+        return _items(self.request("GET", f"/api/companies/{cid}/activity"), "activity", "items", "data")
+
+    def approvals(self) -> list[dict[str, Any]]:
+        cid = quote(self.company_id())
+        return _items(self.request("GET", f"/api/companies/{cid}/approvals"), "approvals", "items", "data")
+
+    def costs(self) -> dict[str, Any]:
+        dash = self.dashboard()
+        inner = dash.get("dashboard", dash) if isinstance(dash, dict) else {}
+        costs = inner.get("costs", {}) if isinstance(inner, dict) else {}
+        return costs if isinstance(costs, dict) else {"response": costs}
+
+    def issue_attachments(self, issue_id: str) -> list[dict[str, Any]]:
+        value = self.request("GET", f"/api/issues/{quote(issue_id)}/attachments")
+        return _items(value, "attachments", "items", "data")
+
+    def routines(self) -> list[dict[str, Any]]:
+        cid = quote(self.company_id())
+        return _items(self.request("GET", f"/api/companies/{cid}/routines"), "routines", "items", "data")
+
+    def artifacts(self) -> list[dict[str, Any]]:
+        cid = quote(self.company_id())
+        return _items(self.request("GET", f"/api/companies/{cid}/artifacts"), "artifacts", "items", "data")
+
+    def skills(self) -> list[dict[str, Any]]:
+        cid = quote(self.company_id())
+        return _items(self.request("GET", f"/api/companies/{cid}/skills"), "skills", "items", "data")
+
+    def skill_sources(self) -> list[dict[str, Any]]:
+        cid = quote(self.company_id())
+        return _items(self.request("GET", f"/api/companies/{cid}/skill-sources"), "sources", "skill_sources", "items", "data")
+
     def overview(self) -> dict[str, Any]:
         health = self.health()
         companies = self.companies()

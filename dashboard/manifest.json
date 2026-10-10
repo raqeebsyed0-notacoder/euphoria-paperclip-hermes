@@ -1,14 +1,1 @@
-{
-  "name": "euphoria-paperclip",
-  "label": "Paperclip",
-  "description": "Live Paperclip governance, issue, agent, run, and Hermes-bridge visibility",
-  "icon": "Package",
-  "version": "0.1.0",
-  "tab": {
-    "path": "/paperclip",
-    "position": "after:skills"
-  },
-  "entry": "dist/index.js",
-  "css": "dist/style.css",
-  "api": "plugin_api.py"
-}
+{"api": "plugin_api.py", "description": "Live Paperclip governance, issue, agent, run, and Hermes-bridge visibility", "icon": "Package", "label": "Paperclip", "name": "euphoria-paperclip", "version": "0.1.0"}

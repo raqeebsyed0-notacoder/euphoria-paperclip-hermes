@@ -23,8 +23,9 @@ Unified Hermes plugin for Paperclip visibility and governed issue operations.
 Run from this directory with the installed Hermes environment:
 
 ```bash
-python -m unittest discover -s tests -v
+PYTHONPATH=. python -m unittest discover -s tests -v
 hermes plugins doctor . --ci
-node --check dashboard/dist/index.js
 node --check desktop/plugin.js
 ```
+
+Dashboard is API-only (Hermes-native rendering via `desktop/plugin.js`); no `dashboard/dist` bundle is shipped. The `dashboard/manifest.json` intentionally contains only `api` and omits `tab`/`entry`/`css`.

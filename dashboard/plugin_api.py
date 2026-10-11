@@ -157,7 +157,12 @@ def issues_update(issue_id: str, confirm: bool = Query(False), body: dict = Body
     return _call(lambda: {"issue": _client().update_issue(issue_id, payload)})
 
 
-@router.post("/issues/{issue_id}/comment")
+@router.get("/issues/{issue_id}/comments")
+def issue_comments(issue_id: str):
+    return _call(lambda: {"comments": _client().issue_comments(issue_id)})
+
+
+@router.post("/issues/{issue_id}/comments")
 def issues_comment(issue_id: str, confirm: bool = Query(False), body: dict = Body(default_factory=dict)):
     allow = _bool_env("PAPERCLIP_ALLOW_WRITES", False)
     if not allow:

@@ -80,7 +80,7 @@ function usePollingData(paths, interval = 30000) {
 }
 
 function metricCard(label, value, subtext) {
-  return jsxs('div', { className: 'rounded border border-(--ui-border) p-3', children: [
+  return jsxs('div', { className: 'rounded border border-(--ui-stroke-tertiary) p-3', children: [
     jsx('div', { className: 'text-[10px] uppercase tracking-wide text-(--ui-text-tertiary)', children: label }),
     jsx('div', { className: 'mt-1 text-xl font-semibold', children: String(value) }),
     subtext ? jsx('div', { className: 'text-[10px] text-(--ui-text-tertiary)', children: subtext }) : null
@@ -88,7 +88,7 @@ function metricCard(label, value, subtext) {
 }
 
 function section(title, children) {
-  return jsxs('section', { className: 'rounded border border-(--ui-border) p-3', children: [
+  return jsxs('section', { className: 'rounded border border-(--ui-stroke-tertiary) p-3', children: [
     jsx('h2', { className: 'mb-2 text-sm font-medium', children: title }),
     ...children
   ] })
@@ -100,7 +100,7 @@ function pageHeader(title, subtitle, loading, onRefresh) {
       jsx('h1', { className: 'text-lg font-semibold', children: title }),
       jsx('p', { className: 'text-xs text-(--ui-text-tertiary)', children: subtitle })
     ] }),
-    jsx('button', { type: 'button', className: 'rounded border border-(--ui-border) px-3 py-1.5 text-xs', onClick: onRefresh, children: loading ? 'Refreshing…' : 'Refresh' })
+    jsx('button', { type: 'button', className: 'rounded border border-(--ui-stroke-tertiary) px-3 py-1.5 text-xs', onClick: onRefresh, children: loading ? 'Refreshing…' : 'Refresh' })
   ] })
 }
 
@@ -115,6 +115,21 @@ function formatDate(iso) {
   const d = new Date(iso)
   if (isNaN(d.getTime())) return '—'
   return d.toLocaleString()
+}
+
+// Upstream comments carry authorType + authorAgentId/authorUserId — never a
+// flat `author` string. Resolve the agent against /agents, else name the type.
+function commentAuthor(comment, agents) {
+  if (!comment) return '—'
+  if (comment.author) return String(comment.author)
+  if (comment.authorName) return String(comment.authorName)
+  if (comment.authorAgentName) return String(comment.authorAgentName)
+  if (comment.authorAgentId) {
+    const name = agentName(agents, comment.authorAgentId)
+    return name !== '—' ? name : String(comment.authorAgentId).slice(0, 8)
+  }
+  if (comment.authorUserId) return String(comment.authorUserId)
+  return comment.authorType ? String(comment.authorType) : '—'
 }
 
 function assigneeLabel(issue, agents) {
@@ -148,18 +163,18 @@ function chartRunActivity(runActivity) {
       className: 'flex items-end justify-between gap-px h-32',
       children: runActivity.map((day, i) => jsxs('div', {
         key: day.date || i,
-        className: 'flex flex-col items-center flex-1 min-w-[20px]',
+        className: 'flex flex-col items-center flex-1 min-w-5',
         children: [
           jsxs('div', {
-            className: 'flex items-end justify-center gap-[1px] w-full h-24',
+            className: 'flex items-end justify-center gap-px w-full h-24',
             children: series.map(s => {
               const val = day[s] || 0
               const h = (val / maxCount) * 100
               return jsx('div', {
                 key: s,
-                className: 'flex-1 min-w-[2px]',
+                className: 'flex-1 min-w-px',
                 children: jsx('div', {
-                  className: 'w-full rounded-t-sm',
+                  className: 'w-full rounded-t-[1px]',
                   style: {
                     backgroundColor: 'var(--ui-accent)',
                     opacity: s === 'other' ? 0.35 : seriesOpacity[s],
@@ -172,7 +187,7 @@ function chartRunActivity(runActivity) {
             })
           }),
           jsx('div', {
-            className: 'mt-1 text-[9px] text-(--ui-text-tertiary) text-center truncate',
+            className: 'mt-1 text-[0.5625rem] text-(--ui-text-tertiary) text-center truncate',
             children: isLabeled(i) ? (day.date || '—') : ''
           })
         ]
@@ -199,14 +214,14 @@ function chartTasksByStatus(counts) {
       children: [
         jsx('span', { className: 'w-24 text-(--ui-text-tertiary) truncate', children: status }),
         jsxs('div', {
-          className: 'flex-1 relative h-5 bg-(--ui-border) rounded-sm overflow-hidden',
+          className: 'flex-1 relative h-5 bg-(--ui-stroke-tertiary) rounded-sm overflow-hidden',
           children: [
             jsx('div', {
               className: 'h-full rounded-sm',
               style: { width: `${pct}%`, backgroundColor: 'var(--ui-accent)', opacity: 0.6 }
             }),
             jsx('span', {
-              className: 'absolute inset-0 flex items-center text-[9px] px-1 overflow-hidden',
+              className: 'absolute inset-0 flex items-center text-[0.5625rem] px-1 overflow-hidden',
               children: String(count || 0)
             })
           ]
@@ -246,12 +261,12 @@ function chartSuccessRate(runActivity) {
       ]
     }),
     jsx('div', {
-      className: 'flex items-end gap-[1px] h-12 mt-2',
+      className: 'flex items-end gap-px h-12 mt-2',
       children: dailyPct.map((pct, i) => {
         const h = pct > 0 ? (pct / maxDaily) * 100 : 0
         return jsx('div', {
           key: i,
-          className: 'flex-1 min-w-[2px] flex items-end',
+          className: 'flex-1 min-w-px flex items-end',
           children: jsx('div', {
             className: 'w-full rounded-sm',
             style: { height: `${h}%`, backgroundColor: 'var(--ui-accent)', opacity: pct > 0 ? 0.55 : 0.1 }
@@ -260,7 +275,7 @@ function chartSuccessRate(runActivity) {
       })
     }),
     jsxs('div', {
-      className: 'mt-1 flex justify-between text-[9px] text-(--ui-text-tertiary)',
+      className: 'mt-1 flex justify-between text-[0.5625rem] text-(--ui-text-tertiary)',
       children: [
         jsx('span', { key: 'first', children: firstDate }),
         jsx('span', { key: 'mid', children: midDate }),
@@ -335,22 +350,22 @@ function PageOverview() {
   const hasAnyData = data != null || dash != null
 
   return jsxs('div', { className: 'flex h-full flex-col overflow-hidden', children: [
-    jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-border) px-4 py-2', children: [
+    jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-stroke-tertiary) px-4 py-2', children: [
       jsxs('div', { children: [
         jsx('h1', { className: 'text-lg font-semibold', children: 'Paperclip' }),
         jsx('p', { className: 'text-xs text-(--ui-text-tertiary)', children: 'Governance overview — dashboard-native' })
       ] }),
       jsxs('div', { className: 'flex items-center gap-2', children: [
-        jsx('button', { type: 'button', onClick: load, className: 'rounded border border-(--ui-border) px-2 py-1 text-xs text-(--ui-text-tertiary)', children: loading ? 'Refreshing…' : 'Refresh' }),
+        jsx('button', { type: 'button', onClick: load, className: 'rounded border border-(--ui-stroke-tertiary) px-2 py-1 text-xs text-(--ui-text-tertiary)', children: loading ? 'Refreshing…' : 'Refresh' }),
         jsx('button', { type: 'button', onClick: openNative, className: 'text-xs text-(--ui-accent) underline', children: 'Open in new tab' })
       ] })
     ] }),
 
     loading && !hasAnyData ? jsx('div', { className: 'p-4 text-sm text-(--ui-text-tertiary)', children: 'Loading Paperclip…' }) : null,
-    !loading && !hasAnyData ? jsx('div', { className: 'p-4 text-sm text-(--ui-danger)', children: error || 'Failed to load data' }) : null,
+    !loading && !hasAnyData ? jsx('div', { className: 'p-4 text-sm text-(--ui-danger,#f87171)', children: error || 'Failed to load data' }) : null,
 
     hasAnyData ? jsxs('div', { className: 'flex-1 min-h-0 overflow-auto p-4', children: [
-      error ? jsx('div', { className: 'mb-3 text-xs text-(--ui-danger)', children: error }) : null,
+      error ? jsx('div', { className: 'mb-3 text-xs text-(--ui-danger,#f87171)', children: error }) : null,
 
       jsxs('div', { className: 'grid grid-cols-4 gap-3 mb-4', children: [
         metricCard('Agents Enabled', agentsEnabled, `${agentRunning} running, ${agentPaused} paused, ${agentError} errors`),
@@ -364,7 +379,7 @@ function PageOverview() {
         const name = agentName(agentsList, issue.assigneeAgentId)
         const title = issue.title || '—'
         const truncated = title.length > 40 ? title.slice(0, 40) + '…' : title
-        return jsxs('div', { key, className: 'rounded border border-(--ui-border) p-3', children: [
+        return jsxs('div', { key, className: 'rounded border border-(--ui-stroke-tertiary) p-3', children: [
           jsx('div', { className: 'text-sm font-medium', children: name }),
           jsx('div', { className: 'text-xs text-(--ui-text-tertiary) truncate', children: truncated }),
           jsxs('div', { className: 'text-xs mt-1', children: [
@@ -412,7 +427,7 @@ const STATUSES = ['all', 'backlog', 'todo', 'in_progress', 'in_review', 'done', 
 const PRIORITIES = ['critical', 'high', 'medium', 'low']
 
 async function fetchIssues(status) {
-  const q = status && status !== 'all' ? `?status=${encodeURIComponent(status)}&limit=100` : '?limit=100'
+  const q = status && status !== 'all' ? `?status=${encodeURIComponent(status)}&limit=200` : '?limit=200'
   const data = await api(`/issues${q}`)
   return Array.isArray(data) ? data : (data?.issues || data?.data || [])
 }
@@ -492,41 +507,41 @@ function CreateIssueForm({ onCreated, onCancel }) {
       jsx('h2', { className: 'text-lg font-semibold', children: 'New Issue' }),
       jsx('button', { type: 'button', onClick: onCancel, className: 'text-xs text-(--ui-text-tertiary) underline', children: 'Cancel' })
     ] }),
-    error ? jsx('div', { className: 'mb-3 text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'mb-3 text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     jsxs('form', { onSubmit: handleSubmit, className: 'space-y-3', children: [
       jsxs('div', { children: [
         jsx('label', { className: 'block text-xs text-(--ui-text-tertiary) mb-1', children: 'Title *' }),
-        jsx('input', { type: 'text', value: title, onChange: e => setTitle(e.target.value), className: 'w-full rounded border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-sm', placeholder: 'Issue title' })
+        jsx('input', { type: 'text', value: title, onChange: e => setTitle(e.target.value), className: 'w-full rounded border border-(--ui-stroke-tertiary) bg-(--ui-bg-editor) px-2 py-1 text-sm', placeholder: 'Issue title' })
       ] }),
       jsxs('div', { children: [
         jsx('label', { className: 'block text-xs text-(--ui-text-tertiary) mb-1', children: 'Description' }),
-        jsx('textarea', { value: description, onChange: e => setDescription(e.target.value), className: 'w-full rounded border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-sm', rows: 4, placeholder: 'Describe the issue…' })
+        jsx('textarea', { value: description, onChange: e => setDescription(e.target.value), className: 'w-full rounded border border-(--ui-stroke-tertiary) bg-(--ui-bg-editor) px-2 py-1 text-sm', rows: 4, placeholder: 'Describe the issue…' })
       ] }),
       jsxs('div', { className: 'grid grid-cols-2 gap-3', children: [
         jsxs('div', { children: [
           jsx('label', { className: 'block text-xs text-(--ui-text-tertiary) mb-1', children: 'Priority' }),
-          jsx('select', { value: priority, onChange: e => setPriority(e.target.value), className: 'w-full rounded border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-sm', children: PRIORITIES.map(p => jsx('option', { key: p, value: p, children: p })) })
+          jsx('select', { value: priority, onChange: e => setPriority(e.target.value), className: 'w-full rounded border border-(--ui-stroke-tertiary) bg-(--ui-bg-editor) px-2 py-1 text-sm', children: PRIORITIES.map(p => jsx('option', { key: p, value: p, children: p })) })
         ] }),
         jsxs('div', { children: [
           jsx('label', { className: 'block text-xs text-(--ui-text-tertiary) mb-1', children: 'Assignee' }),
-          jsx('input', { type: 'text', value: assignee, onChange: e => setAssignee(e.target.value), className: 'w-full rounded border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-sm', placeholder: 'Agent or user' })
+          jsx('input', { type: 'text', value: assignee, onChange: e => setAssignee(e.target.value), className: 'w-full rounded border border-(--ui-stroke-tertiary) bg-(--ui-bg-editor) px-2 py-1 text-sm', placeholder: 'Agent or user' })
         ] })
       ] }),
       jsxs('div', { className: 'grid grid-cols-2 gap-3', children: [
         jsxs('div', { children: [
           jsx('label', { className: 'block text-xs text-(--ui-text-tertiary) mb-1', children: 'Labels' }),
-          jsx('input', { type: 'text', value: labels, onChange: e => setLabels(e.target.value), className: 'w-full rounded border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-sm', placeholder: 'comma, separated' })
+          jsx('input', { type: 'text', value: labels, onChange: e => setLabels(e.target.value), className: 'w-full rounded border border-(--ui-stroke-tertiary) bg-(--ui-bg-editor) px-2 py-1 text-sm', placeholder: 'comma, separated' })
         ] }),
         jsxs('div', { children: [
           jsx('label', { className: 'block text-xs text-(--ui-text-tertiary) mb-1', children: 'Due date' }),
-          jsx('input', { type: 'date', value: dueDate, onChange: e => setDueDate(e.target.value), className: 'w-full rounded border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-sm' })
+          jsx('input', { type: 'date', value: dueDate, onChange: e => setDueDate(e.target.value), className: 'w-full rounded border border-(--ui-stroke-tertiary) bg-(--ui-bg-editor) px-2 py-1 text-sm' })
         ] })
       ] }),
       jsxs('div', { className: 'flex items-center gap-2', children: [
         jsx('input', { type: 'checkbox', id: 'confirm-create', checked: confirm, onChange: e => setConfirm(e.target.checked) }),
         jsx('label', { htmlFor: 'confirm-create', className: 'text-xs text-(--ui-text-tertiary)', children: 'Confirm creation' })
       ] }),
-      jsx('button', { type: 'submit', disabled: submitting || !confirm, className: 'rounded border border-(--ui-border) px-3 py-1.5 text-sm disabled:opacity-50', children: submitting ? 'Creating…' : 'Create Issue' })
+      jsx('button', { type: 'submit', disabled: submitting || !confirm, className: 'rounded border border-(--ui-stroke-tertiary) px-3 py-1.5 text-sm disabled:opacity-50', children: submitting ? 'Creating…' : 'Create Issue' })
     ] })
   ] })
 }
@@ -609,7 +624,7 @@ function IssueDetail({ issueId, onBack, onUpdated }) {
 
   if (loading) return jsx('div', { className: 'p-4 text-sm text-(--ui-text-tertiary)', children: 'Loading issue…' })
   if (error && !issue) return jsxs('div', { className: 'p-4', children: [
-    jsx('div', { className: 'text-sm text-(--ui-danger)', children: error }),
+    jsx('div', { className: 'text-sm text-(--ui-danger,#f87171)', children: error }),
     jsx('button', { type: 'button', onClick: onBack, className: 'mt-2 text-xs text-(--ui-text-tertiary) underline', children: '← Back to list' })
   ] })
   if (!issue) return jsxs('div', { className: 'p-4', children: [
@@ -623,7 +638,7 @@ function IssueDetail({ issueId, onBack, onUpdated }) {
     key: id,
     type: 'button',
     onClick: () => setActiveTab(id),
-    className: `rounded px-2 py-0.5 text-xs ${activeTab === id ? 'bg-(--ui-accent) text-white' : 'border border-(--ui-border) text-(--ui-text-tertiary)'}`,
+    className: `rounded px-2 py-0.5 text-xs ${activeTab === id ? 'bg-(--ui-accent) text-white' : 'border border-(--ui-stroke-tertiary) text-(--ui-text-tertiary)'}`,
     children: label
   })
 
@@ -634,20 +649,20 @@ function IssueDetail({ issueId, onBack, onUpdated }) {
         jsx('span', { children: '/' }),
         jsx('span', { children: issue.identifier || String(issue.id || '').slice(0, 8) })
       ] }),
-      jsx('button', { type: 'button', onClick: load, className: 'rounded border border-(--ui-border) px-2 py-0.5', children: loading ? 'Refreshing…' : 'Refresh' })
+      jsx('button', { type: 'button', onClick: load, className: 'rounded border border-(--ui-stroke-tertiary) px-2 py-0.5', children: loading ? 'Refreshing…' : 'Refresh' })
     ] }),
 
     jsx('h2', { className: 'text-lg font-semibold', children: issue.title || '—' }),
 
     jsxs('div', { className: 'flex flex-wrap gap-2', children: [
-      jsxs('span', { className: 'rounded border border-(--ui-border) px-2 py-0.5 text-xs', children: [statusIcon(issue.status), ' ', issue.status || '—'] }),
-      jsx('span', { className: 'rounded border border-(--ui-border) px-2 py-0.5 text-xs text-(--ui-text-tertiary)', children: `Assignee: ${assignee}` })
+      jsxs('span', { className: 'rounded border border-(--ui-stroke-tertiary) px-2 py-0.5 text-xs', children: [statusIcon(issue.status), ' ', issue.status || '—'] }),
+      jsx('span', { className: 'rounded border border-(--ui-stroke-tertiary) px-2 py-0.5 text-xs text-(--ui-text-tertiary)', children: `Assignee: ${assignee}` })
     ] }),
 
     jsxs('div', { className: 'flex gap-1', children: [tabBtn('properties', 'Properties'), tabBtn('comments', `Comments (${comments.length})`)] }),
 
     activeTab === 'properties' ? jsxs('div', { className: 'space-y-3', children: [
-      jsxs('div', { className: 'rounded border border-(--ui-border) p-3', children: [
+      jsxs('div', { className: 'rounded border border-(--ui-stroke-tertiary) p-3', children: [
         jsx('h3', { className: 'text-xs uppercase tracking-wide text-(--ui-text-tertiary) mb-2', children: 'Properties' }),
         jsxs('dl', { className: 'grid grid-cols-2 gap-x-3 gap-y-2 text-xs', children: [
           jsxs('div', { children: [jsx('dt', { className: 'text-(--ui-text-tertiary)', children: 'Status' }), jsx('dd', { children: issue.status || '—' })] }),
@@ -657,58 +672,62 @@ function IssueDetail({ issueId, onBack, onUpdated }) {
           jsxs('div', { children: [jsx('dt', { className: 'text-(--ui-text-tertiary)', children: 'Created' }), jsx('dd', { children: formatDate(issue.createdAt) })] }),
           jsxs('div', { children: [jsx('dt', { className: 'text-(--ui-text-tertiary)', children: 'Updated' }), jsx('dd', { children: `${formatDate(issue.updatedAt)} (${timeAgo(issue.updatedAt)})` })] })
         ] }),
-        labels.length ? jsx('div', { className: 'mt-2 flex flex-wrap gap-1', children: labels.map((l, i) => jsx('span', { key: `${l}-${i}`, className: 'rounded border border-(--ui-border) px-1.5 py-0.5 text-[10px] text-(--ui-text-tertiary)', children: String(l) })) }) : null
+        labels.length ? jsx('div', { className: 'mt-2 flex flex-wrap gap-1', children: labels.map((l, i) => jsx('span', { key: `${l}-${i}`, className: 'rounded border border-(--ui-stroke-tertiary) px-1.5 py-0.5 text-[10px] text-(--ui-text-tertiary)', children: String(l) })) }) : null
       ] }),
-      issue.description ? jsxs('div', { className: 'rounded border border-(--ui-border) p-3', children: [
+      issue.description ? jsxs('div', { className: 'rounded border border-(--ui-stroke-tertiary) p-3', children: [
         jsx('h3', { className: 'text-xs uppercase tracking-wide text-(--ui-text-tertiary) mb-1', children: 'Description' }),
         jsx('div', { className: 'text-sm whitespace-pre-wrap', children: issue.description })
       ] }) : null,
-      jsxs('div', { className: 'rounded border border-(--ui-border) p-3 space-y-2', children: [
+      jsxs('div', { className: 'rounded border border-(--ui-stroke-tertiary) p-3 space-y-2', children: [
         jsx('h3', { className: 'text-xs uppercase tracking-wide text-(--ui-text-tertiary)', children: 'Update status' }),
         jsxs('div', { className: 'grid grid-cols-2 gap-2', children: [
           jsxs('div', { children: [
             jsx('label', { className: 'block text-[10px] text-(--ui-text-tertiary) mb-0.5', children: 'Status' }),
-            jsx('select', { value: status, onChange: e => setStatus(e.target.value), className: 'w-full rounded border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-xs', children: STATUSES.filter(s => s !== 'all').map(s => jsx('option', { key: s, value: s, children: s })) })
+            jsx('select', { value: status, onChange: e => setStatus(e.target.value), className: 'w-full rounded border border-(--ui-stroke-tertiary) bg-(--ui-bg-editor) px-2 py-1 text-xs', children: STATUSES.filter(s => s !== 'all').map(s => jsx('option', { key: s, value: s, children: s })) })
           ] }),
           jsxs('div', { children: [
             jsx('label', { className: 'block text-[10px] text-(--ui-text-tertiary) mb-0.5', children: 'Priority' }),
-            jsx('select', { value: priority, onChange: e => setPriority(e.target.value), className: 'w-full rounded border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-xs', children: PRIORITIES.map(p => jsx('option', { key: p, value: p, children: p })) })
+            jsx('select', { value: priority, onChange: e => setPriority(e.target.value), className: 'w-full rounded border border-(--ui-stroke-tertiary) bg-(--ui-bg-editor) px-2 py-1 text-xs', children: PRIORITIES.map(p => jsx('option', { key: p, value: p, children: p })) })
           ] })
         ] }),
         jsxs('div', { className: 'flex items-center gap-2', children: [
           jsx('input', { type: 'checkbox', id: 'confirm-update', checked: confirm, onChange: e => setConfirm(e.target.checked) }),
           jsx('label', { htmlFor: 'confirm-update', className: 'text-[10px] text-(--ui-text-tertiary)', children: 'Confirm writes' })
         ] }),
-        jsx('button', { type: 'button', onClick: handleUpdate, disabled: !confirm || updating, className: 'rounded border border-(--ui-border) px-2 py-1 text-xs disabled:opacity-50', children: updating ? 'Updating…' : 'Update' })
+        jsx('button', { type: 'button', onClick: handleUpdate, disabled: !confirm || updating, className: 'rounded border border-(--ui-stroke-tertiary) px-2 py-1 text-xs disabled:opacity-50', children: updating ? 'Updating…' : 'Update' })
       ] })
     ] }) : null,
 
-    activeTab === 'comments' ? jsxs('div', { className: 'rounded border border-(--ui-border) p-3 space-y-2', children: [
+    activeTab === 'comments' ? jsxs('div', { className: 'rounded border border-(--ui-stroke-tertiary) p-3 space-y-2', children: [
       jsx('h3', { className: 'text-xs uppercase tracking-wide text-(--ui-text-tertiary)', children: `Comments (${comments.length})` }),
       comments.length === 0 ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No comments yet' }) : null,
-      comments.map((c, i) => jsxs('div', { key: c.id || i, className: 'border-b border-(--ui-border) pb-2 last:border-0', children: [
+      comments.map((c, i) => jsxs('div', { key: c.id || i, className: 'border-b border-(--ui-stroke-tertiary) pb-2 last:border-b-0', children: [
         jsxs('div', { className: 'flex justify-between text-[10px] text-(--ui-text-tertiary)', children: [
-          jsx('span', { children: c.author || c.authorName || c.authorAgentName || '—' }),
+          jsx('span', { children: commentAuthor(c, agents) }),
           jsx('span', { children: `${formatDate(c.createdAt)} (${timeAgo(c.createdAt)})` })
         ] }),
         jsx('div', { className: 'text-sm mt-0.5 whitespace-pre-wrap', children: c.body || '' })
       ] })),
       jsxs('div', { className: 'space-y-1', children: [
-        jsx('textarea', { value: commentBody, onChange: e => setCommentBody(e.target.value), className: 'w-full rounded border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-xs', rows: 2, placeholder: 'Add a comment…' }),
-        jsx('button', { type: 'button', onClick: handleComment, disabled: !confirm || posting || !commentBody.trim(), className: 'rounded border border-(--ui-border) px-2 py-1 text-xs disabled:opacity-50', children: posting ? 'Posting…' : 'Post comment' })
+        jsx('textarea', { value: commentBody, onChange: e => setCommentBody(e.target.value), className: 'w-full rounded border border-(--ui-stroke-tertiary) bg-(--ui-bg-editor) px-2 py-1 text-xs', rows: 2, placeholder: 'Add a comment…' }),
+        jsxs('div', { className: 'flex items-center gap-2', children: [
+          jsx('input', { type: 'checkbox', id: 'confirm-comment', checked: confirm, onChange: e => setConfirm(e.target.checked) }),
+          jsx('label', { htmlFor: 'confirm-comment', className: 'text-[10px] text-(--ui-text-tertiary)', children: 'Confirm writes' })
+        ] }),
+        jsx('button', { type: 'button', onClick: handleComment, disabled: !confirm || posting || !commentBody.trim(), className: 'rounded border border-(--ui-stroke-tertiary) px-2 py-1 text-xs disabled:opacity-50', children: posting ? 'Posting…' : 'Post comment' })
       ] })
     ] }) : null,
 
-    jsxs('div', { className: 'rounded border border-(--ui-border) p-3 space-y-2', children: [
+    jsxs('div', { className: 'rounded border border-(--ui-stroke-tertiary) p-3 space-y-2', children: [
       jsx('h3', { className: 'text-xs uppercase tracking-wide text-(--ui-text-tertiary)', children: `Attachments (${attachments.length})` }),
       attachments.length === 0 ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No attachments' }) : null,
       attachments.map((a, i) => jsxs('div', { key: a.id || a.name || i, className: 'flex items-center justify-between text-xs', children: [
-        jsx('span', { children: a.name || a.filename || '—' }),
-        jsx('span', { className: 'text-(--ui-text-tertiary)', children: a.size ? `${Math.round(a.size / 1024)}KB` : '' })
+        jsx('span', { children: a.filename || a.name || a.title || a.id || '—' }),
+        jsx('span', { className: 'text-(--ui-text-tertiary)', children: (a.size ?? a.byteSize ?? a.bytes) ? `${Math.max(1, Math.round((a.size ?? a.byteSize ?? a.bytes) / 1024))}KB` : '' })
       ] }))
     ] }),
 
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null
   ] })
 }
 
@@ -774,7 +793,7 @@ function PageTasks() {
       key,
       type: 'button',
       onClick: () => openIssue(issue.id || issue.identifier),
-      className: 'w-full text-left rounded border border-(--ui-border) px-3 py-2 hover:bg-(--ui-bg-secondary) transition-colors',
+      className: 'w-full text-left rounded border border-(--ui-stroke-tertiary) px-3 py-2 hover:bg-(--ui-control-hover-background) transition-colors',
       children: [
         jsxs('div', { className: 'flex items-center justify-between', children: [
           jsx('span', { className: 'text-sm font-medium truncate', children: issue.title || '—' }),
@@ -791,40 +810,40 @@ function PageTasks() {
   }
 
   return jsxs('div', { className: 'flex h-full flex-col overflow-hidden', children: [
-    jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-border) px-4 py-2', children: [
+    jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-stroke-tertiary) px-4 py-2', children: [
       jsx('h1', { className: 'text-lg font-semibold', children: 'Tasks' }),
       jsxs('div', { className: 'flex items-center gap-2', children: [
-        jsxs('div', { className: 'flex rounded border border-(--ui-border) overflow-hidden', children: [
+        jsxs('div', { className: 'flex rounded border border-(--ui-stroke-tertiary) overflow-hidden', children: [
           jsx('button', { type: 'button', onClick: () => setLayout('list'), className: `px-2 py-1 text-xs ${layout === 'list' ? 'bg-(--ui-accent) text-white' : 'text-(--ui-text-tertiary)'}`, children: 'List' }),
           jsx('button', { type: 'button', onClick: () => setLayout('board'), className: `px-2 py-1 text-xs ${layout === 'board' ? 'bg-(--ui-accent) text-white' : 'text-(--ui-text-tertiary)'}`, children: 'Board' })
         ] }),
-        jsx('button', { type: 'button', onClick: load, className: 'rounded border border-(--ui-border) px-2 py-1 text-xs text-(--ui-text-tertiary)', children: loading ? 'Refreshing…' : 'Refresh' }),
-        jsx('button', { type: 'button', onClick: openCreate, className: 'rounded border border-(--ui-border) px-2 py-1 text-xs', children: '+ New Issue' })
+        jsx('button', { type: 'button', onClick: load, className: 'rounded border border-(--ui-stroke-tertiary) px-2 py-1 text-xs text-(--ui-text-tertiary)', children: loading ? 'Refreshing…' : 'Refresh' }),
+        jsx('button', { type: 'button', onClick: openCreate, className: 'rounded border border-(--ui-stroke-tertiary) px-2 py-1 text-xs', children: '+ New Issue' })
       ] })
     ] }),
 
-    jsxs('div', { className: 'flex items-center gap-2 border-b border-(--ui-border) px-4 py-2', children: [
-      jsx('input', { type: 'text', value: query, onChange: e => setQuery(e.target.value), placeholder: 'Search tasks…', className: 'w-full max-w-xs rounded border border-(--ui-border) bg-(--ui-bg) px-2 py-1 text-xs' }),
+    jsxs('div', { className: 'flex items-center gap-2 border-b border-(--ui-stroke-tertiary) px-4 py-2', children: [
+      jsx('input', { type: 'text', value: query, onChange: e => setQuery(e.target.value), placeholder: 'Search tasks…', className: 'w-full max-w-xs rounded border border-(--ui-stroke-tertiary) bg-(--ui-bg-editor) px-2 py-1 text-xs' }),
       query ? jsx('button', { type: 'button', onClick: () => setQuery(''), className: 'text-xs text-(--ui-text-tertiary) underline', children: 'Clear' }) : null,
       jsx('span', { className: 'text-xs text-(--ui-text-tertiary)', children: `${filtered.length} of ${issues.length}` })
     ] }),
 
-    jsx('div', { className: 'flex flex-wrap gap-1 border-b border-(--ui-border) px-4 py-2', children: STATUSES.map(s => jsx('button', {
+    jsx('div', { className: 'flex flex-wrap gap-1 border-b border-(--ui-stroke-tertiary) px-4 py-2', children: STATUSES.map(s => jsx('button', {
       key: s,
       type: 'button',
       onClick: () => setStatusFilter(s),
-      className: `rounded px-2 py-0.5 text-xs ${s === statusFilter ? 'bg-(--ui-accent) text-white' : 'border border-(--ui-border) text-(--ui-text-tertiary)'}`,
+      className: `rounded px-2 py-0.5 text-xs ${s === statusFilter ? 'bg-(--ui-accent) text-white' : 'border border-(--ui-stroke-tertiary) text-(--ui-text-tertiary)'}`,
       children: s
     })) }),
 
-    error ? jsx('div', { className: 'px-4 py-2 text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'px-4 py-2 text-xs text-(--ui-danger,#f87171)', children: error }) : null,
 
     layout === 'board'
       ? jsx('div', { className: 'flex-1 min-h-0 overflow-auto p-4', children:
         loading && issues.length === 0
           ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'Loading issues…' })
-          : jsxs('div', { className: 'grid grid-cols-1 gap-3 md:grid-cols-3 xl:grid-cols-4', children:
-            visibleBoardStatuses.map(st => jsxs('div', { key: st, className: 'rounded border border-(--ui-border) p-2', children: [
+          : jsxs('div', { className: 'grid grid-cols-1 gap-3 sm:grid-cols-3 sm:grid-cols-4', children:
+            visibleBoardStatuses.map(st => jsxs('div', { key: st, className: 'rounded border border-(--ui-stroke-tertiary) p-2', children: [
               jsxs('div', { className: 'flex items-center justify-between px-1 pb-2 text-xs text-(--ui-text-tertiary)', children: [
                 jsxs('span', { children: [statusIcon(st), ' ', st] }),
                 jsx('span', { children: String((grouped[st] || []).length) })
@@ -848,9 +867,9 @@ function AgentCard({ agent, selected, onClick }) {
   const role = agent.role || '—'
   const status = agent.status || 'unknown'
   const issueCount = agent.assignedIssues?.length || agent.issues?.length || agent.issueCount || agent.assignedCount || 0
-  const statusClass = status === 'active' ? 'text-(--ui-accent)' : status === 'paused' ? 'text-(--ui-text-tertiary)' : 'text-(--ui-danger)'
+  const statusClass = status === 'active' ? 'text-(--ui-accent)' : status === 'paused' ? 'text-(--ui-text-tertiary)' : 'text-(--ui-danger,#f87171)'
   return jsxs('div', {
-    className: `rounded border p-3 cursor-pointer transition-colors ${selected ? 'border-(--ui-accent)' : 'border-(--ui-border)'}`,
+    className: `rounded border p-3 cursor-pointer transition-colors ${selected ? 'border-(--ui-accent)' : 'border-(--ui-stroke-tertiary)'}`,
     onClick,
     children: [
       jsx('div', { className: 'text-sm font-medium truncate', children: name }),
@@ -872,7 +891,7 @@ function AgentDetail({ agent }) {
   const name = agent.name || '—'
   const role = agent.role || '—'
   const status = agent.status || 'unknown'
-  return jsxs('section', { className: 'rounded border border-(--ui-border) p-3', children: [
+  return jsxs('section', { className: 'rounded border border-(--ui-stroke-tertiary) p-3', children: [
     jsxs('div', { className: 'flex items-center justify-between mb-2', children: [
       jsx('h2', { className: 'text-sm font-medium', children: name }),
       jsx('span', { className: 'text-xs text-(--ui-text-tertiary)', children: `${role} · ${status}` })
@@ -905,17 +924,17 @@ function PageAgents() {
   const selected = agents.find(a => a.id === selectedId)
   const hasData = agents.length > 0 || dashboard != null
   return jsxs('div', { className: 'flex h-full flex-col overflow-hidden', children: [
-    jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-border) px-4 py-2', children: [
+    jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-stroke-tertiary) px-4 py-2', children: [
       jsxs('div', { children: [
         jsx('h1', { className: 'text-lg font-semibold', children: 'Agents' }),
         jsx('p', { className: 'text-xs text-(--ui-text-tertiary)', children: `${agents.length} agents · ${dashAgents?.active ?? 0} active · ${dashAgents?.paused ?? 0} paused · ${dashAgents?.error ?? 0} errors` })
       ] }),
-      jsx('button', { type: 'button', onClick: load, className: 'rounded border border-(--ui-border) px-2 py-1 text-xs text-(--ui-text-tertiary)', children: loading ? 'Refreshing…' : 'Refresh' })
+      jsx('button', { type: 'button', onClick: load, className: 'rounded border border-(--ui-stroke-tertiary) px-2 py-1 text-xs text-(--ui-text-tertiary)', children: loading ? 'Refreshing…' : 'Refresh' })
     ] }),
     loading && !hasData ? jsx('div', { className: 'p-4 text-sm text-(--ui-text-tertiary)', children: 'Loading agents…' }) : null,
-    !loading && !hasData ? jsx('div', { className: 'p-4 text-sm text-(--ui-danger)', children: error || 'Failed to load data' }) : null,
+    !loading && !hasData ? jsx('div', { className: 'p-4 text-sm text-(--ui-danger,#f87171)', children: error || 'Failed to load data' }) : null,
     hasData ? jsxs('div', { className: 'flex-1 min-h-0 overflow-auto p-4', children: [
-      error ? jsx('div', { className: 'mb-3 text-xs text-(--ui-danger)', children: error }) : null,
+      error ? jsx('div', { className: 'mb-3 text-xs text-(--ui-danger,#f87171)', children: error }) : null,
       jsx('div', { className: 'grid grid-cols-3 gap-3 mb-4', children: agents.map((agent, idx) => {
         const key = agent.id || agent.name || `agent-${idx}`
         return jsx(AgentCard, { key, agent, selected: agent.id === selectedId, onClick: () => setSelectedId(agent.id === selectedId ? null : agent.id) })
@@ -941,18 +960,18 @@ function RunActivityBars({ runActivity }) {
     className: 'flex items-end justify-between gap-px h-32',
     children: runActivity.map((day, i) => jsxs('div', {
       key: day.date || i,
-      className: 'flex flex-col items-center flex-1 min-w-[20px]',
+      className: 'flex flex-col items-center flex-1 min-w-5',
       children: [
         jsxs('div', {
-          className: 'flex items-end justify-center gap-[1px] w-full h-24',
+          className: 'flex items-end justify-center gap-px w-full h-24',
           children: series.map(s => {
             const val = day[s] || 0
             const h = (val / maxCount) * 100
             return jsx('div', {
               key: s,
-              className: 'flex-1 min-w-[2px]',
+              className: 'flex-1 min-w-px',
               children: jsx('div', {
-                className: 'w-full rounded-t-sm',
+                className: 'w-full rounded-t-[1px]',
                 style: {
                   backgroundColor: 'var(--ui-accent)',
                   opacity: s === 'other' ? 0.35 : seriesOpacity[s],
@@ -965,7 +984,7 @@ function RunActivityBars({ runActivity }) {
           })
         }),
         jsx('div', {
-          className: 'mt-1 text-[9px] text-(--ui-text-tertiary) text-center truncate',
+          className: 'mt-1 text-[0.5625rem] text-(--ui-text-tertiary) text-center truncate',
           children: isLabeled(i) ? (day.date || '—') : ''
         })
       ]
@@ -981,12 +1000,12 @@ function RunActivitySection() {
   const dashboard = dashRaw?.dashboard || dashRaw
   const runActivity = dashboard?.runActivity || []
   const hasData = liveRuns.length > 0 || runActivity.length > 0 || dashboard != null
-  return jsxs('section', { className: 'rounded border border-(--ui-border) p-3', children: [
+  return jsxs('section', { className: 'rounded border border-(--ui-stroke-tertiary) p-3', children: [
     jsxs('div', { className: 'flex items-center justify-between mb-2', children: [
       jsx('h2', { className: 'text-sm font-medium', children: 'Run Activity' }),
-      jsx('button', { type: 'button', onClick: load, className: 'rounded border border-(--ui-border) px-2 py-0.5 text-xs text-(--ui-text-tertiary)', children: loading ? 'Refreshing…' : 'Refresh' })
+      jsx('button', { type: 'button', onClick: load, className: 'rounded border border-(--ui-stroke-tertiary) px-2 py-0.5 text-xs text-(--ui-text-tertiary)', children: loading ? 'Refreshing…' : 'Refresh' })
     ] }),
-    error ? jsx('div', { className: 'mb-2 text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'mb-2 text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     loading && !hasData ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'Loading…' }) : null,
     !loading && !hasData ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'No data available' }) : null,
     hasData ? jsxs('div', { children: [
@@ -1031,7 +1050,7 @@ function PageCosts() {
   usePolling(load, 30000)
 
   if (loading && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-text-tertiary)', children: 'Loading costs…' })
-  if (error && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-danger)', children: error })
+  if (error && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-danger,#f87171)', children: error })
 
   const costs = data?.costs || data || {}
   const spend = costs.monthSpendCents ?? 0
@@ -1041,8 +1060,8 @@ function PageCosts() {
 
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     pageHeader('Costs', 'Monthly spend vs budget', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
-    jsxs('div', { className: 'grid grid-cols-2 gap-2 md:grid-cols-3', children: [
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
+    jsxs('div', { className: 'grid grid-cols-2 gap-2 sm:grid-cols-3', children: [
       metricCard('Month spend', fmtCents(spend)),
       metricCard('Budget', isUnlimited ? 'Unlimited' : fmtCents(budget)),
       metricCard('Utilization', isUnlimited ? '—' : `${utilization}%`)
@@ -1093,25 +1112,25 @@ function PageApprovals() {
   }, [confirm, load])
 
   if (loading && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-text-tertiary)', children: 'Loading approvals…' })
-  if (error && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-danger)', children: error })
+  if (error && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-danger,#f87171)', children: error })
 
   const approvals = Array.isArray(data) ? data : (data?.items || data?.approvals || [])
   const pending = approvals.filter(a => a.status === 'pending')
 
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     pageHeader('Approvals', 'Pending approvals', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     section('Pending approvals', [
       pending.length === 0
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No pending approvals' })
-        : jsx('div', { className: 'space-y-2', children: pending.map((a, idx) => jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-border) py-2 text-xs', children: [
+        : jsx('div', { className: 'space-y-2', children: pending.map((a, idx) => jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-stroke-tertiary) py-2 text-xs', children: [
             jsxs('div', { children: [
               jsx('span', { className: 'font-medium', children: a.type || 'Approval' }),
               jsx('span', { className: 'ml-2 text-(--ui-text-tertiary)', children: a.id ? String(a.id).slice(0, 8) : `#${idx}` })
             ] }),
             jsx('button', {
               type: 'button',
-              className: 'rounded border border-(--ui-border) px-2 py-1 text-[10px] disabled:opacity-50',
+              className: 'rounded border border-(--ui-stroke-tertiary) px-2 py-1 text-[10px] disabled:opacity-50',
               onClick: () => approve(a),
               disabled: approving === a.id || !confirm,
               children: approving === a.id ? 'Approving…' : 'Approve'
@@ -1142,18 +1161,18 @@ function PageBridge() {
   usePolling(load, 30000)
 
   if (loading && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-text-tertiary)', children: 'Loading activity…' })
-  if (error && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-danger)', children: error })
+  if (error && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-danger,#f87171)', children: error })
 
   const items = data?.items || data?.activity || (Array.isArray(data) ? data : [])
 
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     pageHeader('Bridge', 'Activity timeline & run activity', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     jsx(RunActivitySection, {}),
     section('Activity', [
       items.length === 0
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No activity recorded' })
-        : jsx('div', { children: items.slice(0, 50).map((a, i) => jsxs('div', { className: 'grid grid-cols-[80px_1fr_auto] gap-2 border-b border-(--ui-border) py-2 text-xs', children: [
+        : jsx('div', { children: items.slice(0, 50).map((a, i) => jsxs('div', { className: 'grid grid-cols-[auto_1fr_auto] gap-2 border-b border-(--ui-stroke-tertiary) py-2 text-xs', children: [
             jsx('span', { className: 'text-(--ui-text-tertiary)', children: a.actorType || 'system' }),
             jsx('span', { children: a.action || 'unknown' }),
             jsx('span', { className: 'text-(--ui-text-tertiary)', children: timeAgo(a.createdAt || a.at) })
@@ -1179,14 +1198,14 @@ function PageHealth() {
   usePolling(load, 30000)
 
   if (loading && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-text-tertiary)', children: 'Loading health…' })
-  if (error && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-danger)', children: error })
+  if (error && !data) return jsx('div', { className: 'p-4 text-sm text-(--ui-danger,#f87171)', children: error })
 
   const health = data || {}
 
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     pageHeader('Health', 'System health', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
-    jsxs('div', { className: 'grid grid-cols-2 gap-2 md:grid-cols-4', children: [
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
+    jsxs('div', { className: 'grid grid-cols-2 gap-2 sm:grid-cols-4', children: [
       metricCard('Status', health.status || '—'),
       metricCard('Version', health.version || health.serverVersion || '—'),
       metricCard('Deployment', health.deploymentMode || '—'),
@@ -1210,17 +1229,17 @@ function PageGoals() {
 
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     pageHeader('Goals', 'Projects and goals', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     loading && !hasData ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'Loading goals…' }) : null,
     section('Projects', [
       projects.length === 0
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No projects' })
-        : jsx('div', { children: projects.map((p, i) => jsx('div', { className: 'border-b border-(--ui-border) py-2 text-xs', children: p.name || p.title || 'Untitled' }, p.id || `project-${i}`)) })
+        : jsx('div', { children: projects.map((p, i) => jsx('div', { className: 'border-b border-(--ui-stroke-tertiary) py-2 text-xs', children: p.name || p.title || 'Untitled' }, p.id || `project-${i}`)) })
     ]),
     section('Goals', [
       goals.length === 0
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No goals' })
-        : jsx('div', { children: goals.map((g, i) => jsxs('div', { className: 'border-b border-(--ui-border) py-2 text-xs', children: [
+        : jsx('div', { children: goals.map((g, i) => jsxs('div', { className: 'border-b border-(--ui-stroke-tertiary) py-2 text-xs', children: [
             jsx('span', { children: g.title || g.name || 'Untitled' }),
             g.status ? jsx('span', { className: 'ml-2 text-(--ui-text-tertiary)', children: g.status }) : null
           ] }, g.id || `goal-${i}`)) })
@@ -1251,15 +1270,15 @@ function PageDashboard() {
 
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     pageHeader('Dashboard', 'Company KPIs and run activity', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     loading && !hasData ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'Loading dashboard…' }) : null,
-    hasData ? jsxs('div', { className: 'grid grid-cols-2 gap-2 md:grid-cols-4', children: [
+    hasData ? jsxs('div', { className: 'grid grid-cols-2 gap-2 sm:grid-cols-4', children: [
       metricCard('Agents Active', agents.active ?? 0, `${agents.running ?? 0} running, ${agents.paused ?? 0} paused, ${agents.error ?? 0} errors`),
       metricCard('Tasks Open', tasks.open ?? 0, `${tasks.inProgress ?? 0} in progress, ${tasks.blocked ?? 0} blocked, ${tasks.done ?? 0} done`),
       metricCard('Month Spend', fmtCents(spend), unlimited ? 'Unlimited budget' : `${costs.monthUtilizationPercent ?? 0}% of budget`),
       metricCard('Pending Approvals', dash.pendingApprovals ?? 0, 'Awaiting board review')
     ] }) : null,
-    hasData ? jsxs('div', { className: 'grid grid-cols-1 gap-3 md:grid-cols-2', children: [
+    hasData ? jsxs('div', { className: 'grid grid-cols-1 gap-3 sm:grid-cols-2', children: [
       chartRunActivity(runActivity),
       chartTasksByStatus(byStatus)
     ] }) : null,
@@ -1286,12 +1305,12 @@ function PageInbox() {
 
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     pageHeader('Inbox', 'Needs attention', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     loading && !hasData ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'Loading inbox…' }) : null,
     section('Failed runs', [
       failed.length === 0
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No failed runs' })
-        : jsx('div', { children: failed.slice(0, 10).map((r, i) => jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-border) py-2 text-xs', children: [
+        : jsx('div', { children: failed.slice(0, 10).map((r, i) => jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-stroke-tertiary) py-2 text-xs', children: [
             jsx('span', { children: r.agentName || r.agentId || r.id || 'Run' }),
             jsx('span', { className: 'text-(--ui-text-tertiary)', children: timeAgo(r.updatedAt || r.createdAt) })
           ] }, r.id || `run-${i}`)) })
@@ -1299,7 +1318,7 @@ function PageInbox() {
     section('Pending approvals', [
       pending.length === 0
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No pending approvals' })
-        : jsx('div', { children: pending.slice(0, 10).map((a, i) => jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-border) py-2 text-xs', children: [
+        : jsx('div', { children: pending.slice(0, 10).map((a, i) => jsxs('div', { className: 'flex items-center justify-between border-b border-(--ui-stroke-tertiary) py-2 text-xs', children: [
             jsx('span', { className: 'font-medium', children: a.type || 'Approval' }),
             jsx('span', { className: 'text-(--ui-text-tertiary)', children: a.id ? String(a.id).slice(0, 8) : `#${i}` })
           ] }, a.id || `approval-${i}`)) })
@@ -1307,7 +1326,7 @@ function PageInbox() {
     section('Recently updated', [
       recent.length === 0
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'Nothing open' })
-        : jsx('div', { children: recent.map((issue, i) => jsxs('div', { className: 'border-b border-(--ui-border) py-2 text-xs', children: [
+        : jsx('div', { children: recent.map((issue, i) => jsxs('div', { className: 'border-b border-(--ui-stroke-tertiary) py-2 text-xs', children: [
             jsxs('div', { className: 'flex items-center justify-between', children: [
               jsx('span', { className: 'font-medium truncate', children: issue.title || '—' }),
               jsx('span', { className: 'ml-2 shrink-0 text-(--ui-text-tertiary)', children: issue.identifier || '' })
@@ -1331,12 +1350,12 @@ function PageProjects() {
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     groupEyebrow('Work'),
     pageHeader('Projects', 'Company projects', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     loading && !hasData ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'Loading projects…' }) : null,
     section('Projects', [
       projects.length === 0 && hasData
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No projects' })
-        : jsx('div', { children: projects.map((p, i) => jsxs('div', { className: 'border-b border-(--ui-border) py-2', children: [
+        : jsx('div', { children: projects.map((p, i) => jsxs('div', { className: 'border-b border-(--ui-stroke-tertiary) py-2', children: [
             jsxs('div', { className: 'flex items-center justify-between text-xs', children: [
               jsx('span', { className: 'font-medium', children: p.name || p.title || 'Untitled' }),
               jsx('span', { className: 'ml-2 shrink-0 text-(--ui-text-tertiary)', children: [statusIcon(p.status), ' ', p.status || '—'].join('') })
@@ -1358,12 +1377,12 @@ function PageRoutines() {
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     groupEyebrow('Work'),
     pageHeader('Routines', 'Scheduled and recurring work', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     loading && !hasData ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'Loading routines…' }) : null,
     section('Routines', [
       routines.length === 0 && hasData
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No routines' })
-        : jsx('div', { children: routines.map((r, i) => jsxs('div', { className: 'border-b border-(--ui-border) py-2', children: [
+        : jsx('div', { children: routines.map((r, i) => jsxs('div', { className: 'border-b border-(--ui-stroke-tertiary) py-2', children: [
             jsxs('div', { className: 'flex items-center justify-between text-xs', children: [
               jsx('span', { className: 'font-medium truncate', children: r.title || r.name || 'Untitled' }),
               jsx('span', { className: 'ml-2 shrink-0 text-(--ui-text-tertiary)', children: [statusIcon(r.status), ' ', r.status || '—'].join('') })
@@ -1387,12 +1406,12 @@ function PageArtifacts() {
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     groupEyebrow('Work'),
     pageHeader('Artifacts', 'Documents and files across issues', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     loading && !hasData ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'Loading artifacts…' }) : null,
     section('Artifacts', [
       artifacts.length === 0 && hasData
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No artifacts' })
-        : jsx('div', { children: artifacts.slice(0, 50).map((a, i) => jsxs('div', { className: 'border-b border-(--ui-border) py-2', children: [
+        : jsx('div', { children: artifacts.slice(0, 50).map((a, i) => jsxs('div', { className: 'border-b border-(--ui-stroke-tertiary) py-2', children: [
             jsxs('div', { className: 'flex items-center justify-between text-xs', children: [
               jsx('span', { className: 'font-medium truncate', children: a.title || 'Untitled' }),
               jsx('span', { className: 'ml-2 shrink-0 text-(--ui-text-tertiary)', children: a.mediaKind || a.source || '' })
@@ -1417,12 +1436,12 @@ function PageSkills() {
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     groupEyebrow('Org'),
     pageHeader('Skills', `${skills.length} installed skills`, loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     loading && !hasData ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'Loading skills…' }) : null,
     section('Skills', [
       skills.length === 0 && hasData
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No skills installed' })
-        : jsx('div', { children: skills.map((s, i) => jsxs('div', { className: 'border-b border-(--ui-border) py-2', children: [
+        : jsx('div', { children: skills.map((s, i) => jsxs('div', { className: 'border-b border-(--ui-stroke-tertiary) py-2', children: [
             jsxs('div', { className: 'flex items-center justify-between text-xs', children: [
               jsx('span', { className: 'font-medium truncate', children: s.name || s.key || 'Untitled' }),
               s.trustLevel ? jsx('span', { className: 'ml-2 shrink-0 text-(--ui-text-tertiary)', children: s.trustLevel }) : null
@@ -1444,12 +1463,12 @@ function PageConnectors() {
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     groupEyebrow('Org'),
     pageHeader('Connectors', 'Connected skill sources and apps', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     loading && !hasData ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'Loading connectors…' }) : null,
     section('Connections', [
       connectors.length === 0 && hasData
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No connected sources — skill repositories and app connections will appear here' })
-        : jsx('div', { children: connectors.map((c, i) => jsxs('div', { className: 'border-b border-(--ui-border) py-2', children: [
+        : jsx('div', { children: connectors.map((c, i) => jsxs('div', { className: 'border-b border-(--ui-stroke-tertiary) py-2', children: [
             jsxs('div', { className: 'flex items-center justify-between text-xs', children: [
               jsx('span', { className: 'font-medium truncate', children: c.name || c.url || c.repository || (c.id ? String(c.id).slice(0, 8) : 'Connection') }),
               c.status ? jsx('span', { className: 'ml-2 shrink-0 text-(--ui-text-tertiary)', children: c.status }) : null
@@ -1470,12 +1489,12 @@ function PageAudit() {
   return jsxs('div', { className: 'flex h-full flex-col gap-3 overflow-auto p-4', children: [
     groupEyebrow('Org'),
     pageHeader('Audit', 'Company activity log', loading, load),
-    error ? jsx('div', { className: 'text-xs text-(--ui-danger)', children: error }) : null,
+    error ? jsx('div', { className: 'text-xs text-(--ui-danger,#f87171)', children: error }) : null,
     loading && !hasData ? jsx('div', { className: 'text-sm text-(--ui-text-tertiary)', children: 'Loading audit log…' }) : null,
     section('Activity', [
       items.length === 0 && hasData
         ? jsx('div', { className: 'text-xs text-(--ui-text-tertiary)', children: 'No activity recorded' })
-        : jsx('div', { children: items.slice(0, 50).map((a, i) => jsxs('div', { className: 'grid grid-cols-[80px_1fr_auto] gap-2 border-b border-(--ui-border) py-2 text-xs', children: [
+        : jsx('div', { children: items.slice(0, 50).map((a, i) => jsxs('div', { className: 'grid grid-cols-[auto_1fr_auto] gap-2 border-b border-(--ui-stroke-tertiary) py-2 text-xs', children: [
             jsx('span', { className: 'text-(--ui-text-tertiary)', children: a.actorType || 'system' }),
             jsx('span', { children: a.action || 'unknown' }),
             jsx('span', { className: 'text-(--ui-text-tertiary)', children: timeAgo(a.createdAt || a.at) })

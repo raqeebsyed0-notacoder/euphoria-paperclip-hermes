@@ -99,3 +99,56 @@ class PluginTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DesktopSurfaceTests(unittest.TestCase):
+    """Guards the Desktop half against the plugin's OWN backend.
+
+    The renderer reaches the backend only through ctx.rest('/path') under
+    /api/plugins/<id>. A path the backend does not mount is a 404 at runtime,
+    so every path desktop/plugin.js calls must exist as a route here.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        from fastapi import FastAPI
+        from fastapi.testclient import TestClient
+        from dashboard.plugin_api import router
+
+        app = FastAPI()
+        app.include_router(router, prefix="/api/plugins/euphoria-paperclip")
+        cls.client = TestClient(app, raise_server_exceptions=False)
+
+    def test_desktop_comment_routes_are_mounted(self):
+        """GET+POST /issues/{id}/comments — the paths plugin.js actually calls."""
+        paths = router_paths()
+        self.assertIn(("/issues/{issue_id}/comments", "GET"), paths)
+        self.assertIn(("/issues/{issue_id}/comments", "POST"), paths)
+
+    def test_desktop_paths_resolve_not_404(self):
+        """A 404 means the renderer's fetch would fail; 200/403/502 are all
+        'route exists'. 502 is the client's upstream-error wrapper."""
+        for method, path in [
+            ("GET", "/issues?limit=200"),
+            ("GET", f"/issues/{ISSUE}/comments"),
+            ("GET", f"/issues/{ISSUE}/attachments"),
+            ("POST", f"/issues/{ISSUE}/comments?confirm=true"),
+        ]:
+            with self.subTest(path=path):
+                r = self.client.request(method, "/api/plugins/euphoria-paperclip" + path)
+                self.assertNotEqual(r.status_code, 404, f"{method} {path} is not mounted")
+
+    def test_comment_write_requires_confirm(self):
+        r = self.client.post(f"/api/plugins/euphoria-paperclip/issues/{ISSUE}/comments", json={"body": "x"})
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("confirm", r.text)
+
+    def test_issue_list_limit_accepts_desktop_value(self):
+        """plugin.js asks for limit=200; the route must accept it (le=200)."""
+        r = self.client.get("/api/plugins/euphoria-paperclip/issues?limit=200")
+        self.assertEqual(r.status_code, 200)
+
+
+def router_paths():
+    from dashboard.plugin_api import router
+    return {(r.path, m) for r in router.routes for m in (getattr(r, "methods", None) or [])}

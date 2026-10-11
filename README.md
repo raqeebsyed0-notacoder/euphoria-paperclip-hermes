@@ -29,3 +29,20 @@ node --check desktop/plugin.js
 ```
 
 Dashboard is API-only (Hermes-native rendering via `desktop/plugin.js`); no `dashboard/dist` bundle is shipped. The `dashboard/manifest.json` intentionally contains only `api` and omits `tab`/`entry`/`css`.
+
+## Desktop half notes
+
+- Disk plugins are NOT scanned by Tailwind. Only classes the Desktop's own
+  build already emits have CSS, so `desktop/plugin.js` may use core's
+  vocabulary only: `--ui-stroke-primary|secondary|tertiary|quaternary`,
+  `--ui-bg-chrome|sidebar|editor|elevated|card|...`, `--ui-text-*`,
+  `--ui-red`, and `--ui-danger` **with** the inline `,#f87171` fallback
+  (the Desktop never defines `--ui-danger`). `--ui-border`, `--ui-bg` and a
+  bare `--ui-danger` are not Desktop tokens.
+- Every `ctx.rest('/path')` the renderer calls must be mounted under
+  `/api/plugins/euphoria-paperclip` by `dashboard/plugin_api.py`.
+  `DesktopSurfaceTests` asserts this, so a path drift fails the suite
+  instead of 404-ing at runtime.
+- The company holds more issues than the old `limit=100` window; the list
+  route accepts up to `limit=200`.
+

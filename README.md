@@ -2,6 +2,18 @@
 
 Unified Hermes plugin for Paperclip visibility and governed issue operations.
 
+## UI REQUIREMENT (Founder standing order — read before touching any UI)
+
+The Desktop UI must be the ORIGINAL Paperclip UI, restyled to maintain the
+Hermes Desktop theme. A dashboard-native restyle that replaces the original
+UI FAILS this requirement, no matter how well it renders.
+
+Acceptance before any UI work is accepted:
+1. Screenshot-vs-original comparison, side by side.
+2. Founder eye = final gate (taste is a Founder call).
+
+Pinned 2026-10-13 after repeated sessions built to the wrong target.
+
 ## Surfaces
 
 - Agent tools: `paperclip_overview`, `paperclip_issues`, `paperclip_agents`
